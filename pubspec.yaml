@@ -55,6 +55,9 @@ dev_dependencies:
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
+
+# --- 【*** 請在檔案中補上這個關鍵區塊 ***】 ---# 這個區塊會強制專案使用指定版本的套件，解決版本衝突d
+dependency_overrides:http: ^1.2.1
 # The following section is specific to Flutter packages.
 flutter:
 

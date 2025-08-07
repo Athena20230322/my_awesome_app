@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'pages/top_up_page.dart';
 import 'pages/payment_page.dart';
 import 'pages/cosmed_payment_page.dart';
+import 'pages/ride_payment_page.dart';
 void main() {
-  // 檢查應用程式是否過期
   final expirationDate = DateTime.parse('2025-09-07');
   final currentDate = DateTime.now();
   if (currentDate.isAfter(expirationDate)) {
@@ -17,6 +17,7 @@ class ExpiredAppPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       home: Scaffold(
         appBar: AppBar(title: const Text('應用程式已過期'), backgroundColor: Colors.red),
         body: const Center(
@@ -44,8 +45,9 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'icash Pay Demo',
-      theme: ThemeData(primarySwatch: Colors.blue, useMaterial3: true),
+      theme: ThemeData(primarySwatch: Colors.blue, useMaterial3: true, colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue)),
       home: const HomePage(),
+      debugShowCheckedModeBanner: false,
     );
   }
 }
@@ -56,11 +58,11 @@ class HomePage extends StatefulWidget {
 }
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
-  // 將頁面元件列表移至此處
   static const List<Widget> _widgetOptions = <Widget>[
     TopUpPage(),
     PaymentPage(),
     CosmedPaymentPage(),
+    RidePaymentPage(),
   ];
   void _onItemTapped(int index) {
     setState(() {
@@ -78,9 +80,13 @@ class _HomePageState extends State<HomePage> {
           BottomNavigationBarItem(icon: Icon(Icons.add_card), label: '現金儲值'),
           BottomNavigationBarItem(icon: Icon(Icons.qr_code_scanner), label: '反掃付款'),
           BottomNavigationBarItem(icon: Icon(Icons.store), label: '康是美扣款'),
+          BottomNavigationBarItem(icon: Icon(Icons.directions_bus), label: '乘車碼扣款'),
         ],
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
+        type: BottomNavigationBarType.fixed,
+        selectedItemColor: Theme.of(context).colorScheme.primary,
+        unselectedItemColor: Colors.grey,
       ),
     );
   }
