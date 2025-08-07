@@ -155,3 +155,35 @@ MIIEogIBAAKCAQEAyScTCR4BQ17b2UP33jhPcdcKQfWyWxk5xoYsxw7+xoWsc6e6KkxqQYY2BMZoMTy/
     }
   }
 }
+
+// --- 處理「UAT 現金儲值」的服務 ---
+class UatGeneralApiService {
+  // --- UAT 環境參數 ---
+  static const String _aesKey = "wetEi4zKeJTDLcXCvqrDduAThvoeUudd";
+  static const String _aesIV = "zlHw6q30q2qmWlzD";
+  static const String _encKeyId = "117497";
+  static const String _privateKey = '''
+-----BEGIN PRIVATE KEY-----
+MIIEowIBAAKCAQEAyTVkMuX3QXVAlISnNwRgWmVaOEkv/sq0P++q/gAeKBoqMh20jCOO2tmGZ0XsBuvFToA8M1OwcLksGYJUeahd1oh3XerMr87+xS6L6+x3f+q7OJ2q5LGyYXzF06z5ilfnH5oGuwtx5+okU03JkO4pYMXeJC3wHnPD6FwGd4IGdI83qTE8IaE5vBbNshd/I3rLd9ETTNfmpll27gJYKbqDHFgtJoUwqXqo/VcHd2Wsrtma9tHM3Yd+5fl63mccTlN3+OKQnGT2hXtQNa99H9LdiGae+Aq+z/Xsj1VJVbI5P1TTVy6WAyGLQ2X5Kmakv+4LaB4+QDIxjecrCwYDCHlR3QIDAQABAoIBABgJE3rcCz0LyWbkcMgq8uqhfFVIct4ML1uK4QF+GJwgQgWiFEkAT2aXwQ0xplgOTo/J1EcqWmOgzyKN9dLhmLIRs7apn4Fp5/e8j3TjlsPWUb6Z4Qn4Ky+nlMcsPNP4m7Cj+OVboOP8DZJQ8sDoHlPD1z05qpssp4yof5JDm0tNgS/GfOQJFC+bF9xmNtTfqD+T6zeidaARuy/uPhSO2hG+NhNOjxcXwfIXihlGFxRNjTZtHmXDUgR5DXT4oJu0gNiz52QAX0tS4w+S3xsRE+Y7rYVn1oDUSwMSWEycmGfur9Lv6CExrnHB13j26QaZ25MK902tyJlFQYCV8esMO7ECgYEA6kU7Nqryrbld+lgsgg1Ks2nfqpYxnvGL6ITDYThphJdJhPTCITkUFPkVo9KNks3B2K/Hj1fhb7Kr3i80D0pE0Yospj8ZjNt+hieB/mjQ9BmONvdrgxi1fT/4Szwct631X5MJng9Nl23nHGgESV8xzIRs9K/IWUK9P/FArCSDAe0CgYEA298afAyg643Pdpb9qTM9/uJXHNkHHNPU7g+7Z2/mdjC/XZBy03qK7EdfZLZ4r/WXZxxUxwu0C7mAaezPxWZypR4jSSPn2yz0AUMtrVjZnDfZgGbtsynUt9OffgHhRXsRhQ94Lf56W7DteH/TxNwGuOmkgbajC2CcjCMNG4pNUbECgYAhnaWNhqIkA4FUtupMDxQ1AnAxzjN4lzh4OPTAMpQRjpPiHCzvD32uNL/CLihadGPob/C2xOl4Wa8HxsY1m3acirM1d8B20dgp7+lbVDcHj9M0V/R5b0Y7nr5GLW4BfVjEShkLMS71F7QeA176GErRCf+IbODWzhjR4BBjoymZUQKBgQDQ2b+ijaxdk7q5fvs8OXxuHDl7IXvsGhtsdm0g994F7pAYJBmuX/yOK82lMN665aIHQ5YT7D391RrxgwxpCcNkrJf/5adbPfwZJuLAgmFSToq/uQWY5ec1JkOdwdNl2Fzv853Isq0vY4RurZ1OpWGNTAIDZKTDLeYGB1VwD5MaQQKBgBOnuj4zP9rp3G4vqCPWWvk0wV9MYMEXFc96Nm84Tj+YW7x3pxTAXlV1VSeu8jKmdM0HkjQXM1mXfUuJo5WSM1FI1lKAMjLe31fhgxgEA6l4vtikHWXP/4IIyiYBqKyNOnJVxll34qaiYA80SkOEFJxX8QvBgHtWf7x2IKyFthEr
+-----END PRIVATE KEY-----
+''';
+  Future<String> performTopUp({required String topUpAmt, required String buyerId}) async {
+    final timeInfo = _CryptoUtils.getCurrentTime();
+    final data = { "PlatformID": "10000266", "MerchantID": "10000266", "Ccy": "TWD", "TopUpAmt": topUpAmt, "OPSeq": timeInfo['tradeNo'], "StoreId": "982351", "StoreName": "鑫和睦", "PosNo": "01", "OPTime": timeInfo['tradeDate'], "CorpID": "22555003", "PaymentNo": "038", "Remark": "123456", "Itemlist": [{}], "BuyerID": buyerId, };
+    // 使用 UAT 的 URL
+    return _postRequest(Uri.parse('https://icp-payment-preprod.icashpay.com.tw/api/V2/Payment/Pos/SETTopUp'), json.encode(data));
+  }
+  // 這個私有方法會被上面的 performTopUp 呼叫
+  Future<String> _postRequest(Uri url, String jsonDataString) async {
+    final encdata = _CryptoUtils.encryptAES_CBC_256(jsonDataString, _aesKey, _aesIV);
+    final signature = _CryptoUtils.signData(encdata, _privateKey);
+    final response = await http.post(url, headers: { 'X-iCP-EncKeyID': _encKeyId, 'X-iCP-Signature': signature, 'Content-Type': 'application/x-www-form-urlencoded', }, body: {'EncData': encdata},);
+    if (response.statusCode == 200) {
+      final responseBody = json.decode(response.body);
+      final decryptedData = _CryptoUtils.decryptAES_CBC_256(responseBody['EncData'], _aesKey, _aesIV);
+      return "請求成功！\n解密後的回應：\n$decryptedData";
+    } else {
+      return "請求失敗：\n狀態碼: ${response.statusCode}\n回應: ${response.body}";
+    }
+  }
+}
