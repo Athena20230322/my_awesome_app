@@ -5,7 +5,8 @@ import 'package:intl/intl.dart';
 import 'package:encrypt/encrypt.dart' as encrypt;
 import 'package:pointycastle/export.dart' as pc;
 import 'package:asn1lib/asn1lib.dart';
-// --- 基底加密與工具類別 ---
+
+// --- 基底加密與工具類別 (維持不變) ---
 class _CryptoUtils {
   static String encryptAES_CBC_256(String plainText, String key, String iv) {
     final keyUtf8 = utf8.encode(key);
@@ -14,6 +15,7 @@ class _CryptoUtils {
     final encrypted = encrypter.encrypt(plainText, iv: encrypt.IV(Uint8List.fromList(ivUtf8)));
     return encrypted.base64;
   }
+
   static String decryptAES_CBC_256(String encryptedBase64, String key, String iv) {
     final keyUtf8 = utf8.encode(key);
     final ivUtf8 = utf8.encode(iv);
@@ -21,6 +23,7 @@ class _CryptoUtils {
     final decrypted = encrypter.decrypt(encrypt.Encrypted.fromBase64(encryptedBase64), iv: encrypt.IV(Uint8List.fromList(ivUtf8)));
     return decrypted;
   }
+
   static String signData(String dataToSign, String privateKeyPem) {
     final privateKey = _parsePrivateKeyFromPem(privateKeyPem);
     final signer = pc.RSASigner(pc.SHA256Digest(), '0609608648016503040201');
@@ -28,6 +31,7 @@ class _CryptoUtils {
     final signature = signer.generateSignature(Uint8List.fromList(utf8.encode(dataToSign)));
     return base64.encode(signature.bytes);
   }
+
   static pc.RSAPrivateKey _parsePrivateKeyFromPem(String pem) {
     final cleanPem = pem.replaceAll('-----BEGIN PRIVATE KEY-----', '').replaceAll('-----END PRIVATE KEY-----', '').replaceAll(RegExp(r'\s'), '');
     final bytes = base64.decode(cleanPem);
@@ -50,6 +54,7 @@ class _CryptoUtils {
     final q = (innerSeq.elements[5] as ASN1Integer).valueAsBigInteger;
     return pc.RSAPrivateKey(modulus, privateExponent, p, q);
   }
+
   static Map<String, String> getCurrentTime() {
     final now = DateTime.now();
     return {
@@ -58,7 +63,8 @@ class _CryptoUtils {
     };
   }
 }
-// --- 處理「現金儲值」和「反掃付款」的服務 ---
+
+// --- 處理「現金儲值」和「反掃付款」的服務 (維持不變) ---
 class GeneralApiService {
   static const String _aesKey = "VhoGVCInVF2UJ1cQBVZCF48lGUVIoCng";
   static const String _aesIV = "z3P4Se8qTFE0F1xI";
@@ -91,8 +97,10 @@ MIIEowIBAAKCAQEA0hXyO7E10c4WR/S1XUFUyvlLS8wX/3RoL9nE4kwWJC+nTy8AFSVBgNz2KPnv3If+
     }
   }
 }
-// --- 處理「康是美扣款」的服務 (完全獨立) ---
+
+// --- 處理「康是美」相關的服務 (修改此類別) ---
 class CosmedApiService {
+  // --- 常數 (與 JS 檔案一致，不需變更) ---
   static const String _aesKey = "xtzXnXnjDkhVWXNZlPJ2gMGAElKF28Kw";
   static const String _aesIV = "IeAzH3aBMlD5pvai";
   static const String _encKeyId = "274676";
@@ -102,6 +110,69 @@ class CosmedApiService {
 -----BEGIN PRIVATE KEY-----
 MIIEogIBAAKCAQEAyScTCR4BQ17b2UP33jhPcdcKQfWyWxk5xoYsxw7+xoWsc6e6KkxqQYY2BMZoMTy/t7Ko8sZnMLDYgaANlEnsDGidy/XoTbXLKNMPXiw9xsCsuQq5DoGlNimu5uvRgTLWsJqb34UBl5lOCHmlvHvdLzw4fO/zlMuSf4pBSFmwVFytJxuNgbXIhZyuVoWiFNR0SIzmouclyHjANaBnRgrXA/KXdvz1CjbCMlZz17L8n6POid9nMvGfUdGfkKxxooYSNyND4lVcb41C9f+l2pXroG9owVwUUgzIa38fmIi3VzxNrJ4vyYlNH5myMU2g7XKgOtWRxauP1jJS6xUEUVDwaQIDAQABAoIBACL6THEVaprQb+JD02Is4IOnJP17P9xfcpB23GpwzRSwQeCKlfCtAP0L3XDPH2cQbTYANyigH2l0FvHTZwkWIZm2x1mkFRUOO5mJue5iOwvIjUBQAQXovVXBwcwdzXxt3q8u81PWyQQXgF4w6QTxdPC1xAzVnMGO9JaA8AEot2SzuYckLjEGXrmUPLZCdJS5wbgwCwJuCxlHjWI0sihRgWs5FbxiHrTTlepSacO0gl4/r2225fbTy4SeSQDf4mKmXX9cEHMSpyCwXKFsQheXYXXvS/514Jomiou2ijTXywibxrv41KfdSK8NYCP85d0hGr0apvoomd7p3+cUuKUrsxECgYEA+t1xFcx79B2s47hcD1cv/AAFt1mjGCqS2AQnDsiCAMEERfx2vudoktUu+7abehWyo0NgkJqmG/xmY2LY/bMGP+OUnUhVDyPBQs4/Q6WIZmrIsIBYOoRzhMIE7VPUwEcD1bMGC0oGrFO3TjNfEd/him9Z+9jK5JFMYXeYj4ZQusMCgYEAzUUifEN0meksTZJo8qK5FPLbCdm7FAMEN/IrKacOO/ZROnFFtxpltezqon5mt2bxIaEbpPSgpNc4bhFpWXX/O/VaW9xVy6YGG5x0YFLaGVpLpvZNdsf0/eIP8X75hDfftKIskhtd9Frjk6zEu+989dipDQ5nRdUfekfNVTYC/WMCgYAOVs358wA6yd9x/L22WsNxYgbxnfwGi5htJH+fBrL3nBDEd1PKQavmiKzw0lU8uzTExDsmyNAp1Vl84M+KYMtAp599Bf9mqCKJ0QQot7N+NyhVfmCMp7l6oyRo9Fu6ydRcSKlVx9ttyjM2ExWiDev0X70C+jdOrUdyYsWjnofKxQKBgE9WMzf4Em8SUk9BEVMGVaalHse14bqgV9cPwGL+8F94mniOIzXb/AfOo/leBXFJVlV7IWYmLpjHnkXccO1kz9tqvxvWE0r8xkuRsuEv5J/76FWFyPbp3eTqpOLgAqx5s/rq23M1JKE3J9KB6iABNjkHHn+vW3cAIoRukAwpLgqlAoGAA3YT/HRvyTF4P+jUBoORsjYbK2/4kJ6Zi5hTRGbkFn9kmRIdJ0sflGrV7y8Av/aE8KBTOqFETvBZQoW47X3BSjDYVqQhvlhtNjEV3cqd7PFLpF8JELh+MRDgvRA+iwozDiG89+lS2cogP8smW6i2VYQsg1fLbQWW5J5lgBHLMq4=
 -----END PRIVATE KEY-----''';
+
+  // --- ✨ 此處為主要修改點 ---
+  Future<String> getPaymentUrl({required String totalAmount}) async {
+    final timeInfo = _CryptoUtils.getCurrentTime();
+    final data = {
+      "PlatformID": _platformId,
+      "MerchantID": _merchantId,
+      "MerchantTradeNo": timeInfo['tradeNo'],
+      "StoreID": "ICASH-001",
+      "StoreName": "Cosmed",
+      "MerchantTradeDate": timeInfo['tradeDate'],
+      "TotalAmount": totalAmount,
+      "ItemAmt": totalAmount,
+      "UtilityAmt": "0",
+      "ItemNonRedeemAmt": "0",
+      "UtilityNonRedeemAmt": "0",
+      "NonPointAmt": "0",
+      "Item": [{"ItemNo": "001", "ItemName": "測試商品1", "Quantity": "1"}],
+      "TradeMode": "2",
+      "CallbackURL": "https://prod-21.japaneast.logic.azure.com/workflows/896a5a51348c488386c686c8e83293c8/triggers/ICPOB002/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FICPOB002%2Frun&sv=1.0&sig=81SiqqBYwWTplvxc3OSCCU6sk9oNT6nI4w5t9Z8v6j4",
+      "RedirectURL": "https://shop.cosmed.com.tw",
+    };
+
+    final jsonDataString = json.encode(data);
+    final encdata = _CryptoUtils.encryptAES_CBC_256(jsonDataString, _aesKey, _aesIV);
+    final signature = _CryptoUtils.signData(encdata, _privateKey);
+
+    final response = await http.post(
+      Uri.parse('https://icp-payment-stage.icashpay.com.tw/api/V2/Payment/Cashier/GetPaymentURL'),
+      headers: {
+        'X-iCP-EncKeyID': _encKeyId,
+        'X-iCP-Signature': signature,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: {'EncData': encdata},
+    );
+
+    if (response.statusCode == 200) {
+      final responseBody = json.decode(response.body);
+      if (responseBody.containsKey('EncData') && responseBody['EncData'] != null) {
+        final decryptedData = _CryptoUtils.decryptAES_CBC_256(responseBody['EncData'], _aesKey, _aesIV);
+        final parsedData = json.decode(decryptedData);
+
+        // 【修正後的判斷邏輯】
+        // 舊邏輯: if (parsedData['PaymentURL'] != null && parsedData['RtnCode'] == 1)
+        // 新邏輯: 只要解密後的回應中直接含有 PaymentURL 欄位，就視為成功
+        if (parsedData['PaymentURL'] != null && (parsedData['PaymentURL'] as String).isNotEmpty) {
+          return parsedData['PaymentURL']; // 成功，回傳 URL
+        } else {
+          // API 有回傳但內容是錯誤訊息
+          final jsonEncoder = JsonEncoder.withIndent('  ');
+          final prettyError = jsonEncoder.convert(parsedData);
+          throw Exception('API 回應錯誤 (未包含有效的 PaymentURL):\n$prettyError');
+        }
+      } else {
+        throw Exception('API 回應格式錯誤: ${response.body}');
+      }
+    } else {
+      throw Exception('HTTP 請求失敗 (狀態碼: ${response.statusCode})\n回應: ${response.body}');
+    }
+  }
+
+  // --- 現有的「扣款」API (維持不變) ---
   Future<String> performDeduction({required String totalAmount, required String barCode}) async {
     final timeInfo = _CryptoUtils.getCurrentTime();
     final data = {
@@ -126,10 +197,7 @@ MIIEogIBAAKCAQEAyScTCR4BQ17b2UP33jhPcdcKQfWyWxk5xoYsxw7+xoWsc6e6KkxqQYY2BMZoMTy/
       "BarCode": barCode,
     };
     final jsonDataString = json.encode(data);
-    // :白色的对勾: [最終修正] 調整加密與簽章順序，與通用 API 保持一致
-    // 1. 先加密
     final encdataForBody = _CryptoUtils.encryptAES_CBC_256(jsonDataString, _aesKey, _aesIV);
-    // 2. 再對加密後的資料簽章
     final signature = _CryptoUtils.signData(encdataForBody, _privateKey);
     final response = await http.post(
       Uri.parse('https://icp-payment-stage.icashpay.com.tw/api/V2/Payment/Pos/DeductICPOF'),
@@ -156,7 +224,7 @@ MIIEogIBAAKCAQEAyScTCR4BQ17b2UP33jhPcdcKQfWyWxk5xoYsxw7+xoWsc6e6KkxqQYY2BMZoMTy/
   }
 }
 
-// --- 處理「UAT 現金儲值」的服務 ---
+// --- 處理「UAT 現金儲值」的服務 (維持不變) ---
 class UatGeneralApiService {
   // --- UAT 環境參數 ---
   static const String _aesKey = "wetEi4zKeJTDLcXCvqrDduAThvoeUudd";
@@ -173,7 +241,7 @@ MIIEowIBAAKCAQEAyTVkMuX3QXVAlISnNwRgWmVaOEkv/sq0P++q/gAeKBoqMh20jCOO2tmGZ0XsBuvF
     // 使用 UAT 的 URL
     return _postRequest(Uri.parse('https://icp-payment-preprod.icashpay.com.tw/api/V2/Payment/Pos/SETTopUp'), json.encode(data));
   }
-  // 這個私有方法會被上面的 performTopUp 呼叫
+
   Future<String> _postRequest(Uri url, String jsonDataString) async {
     final encdata = _CryptoUtils.encryptAES_CBC_256(jsonDataString, _aesKey, _aesIV);
     final signature = _CryptoUtils.signData(encdata, _privateKey);

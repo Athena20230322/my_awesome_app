@@ -3,7 +3,9 @@ import 'pages/top_up_page.dart';
 import 'pages/payment_page.dart';
 import 'pages/cosmed_payment_page.dart';
 import 'pages/ride_payment_page.dart';
-import 'pages/top_up_page_uat.dart'; // <--- 1. 引用新的 UAT 頁面
+import 'pages/top_up_page_uat.dart';
+import 'pages/cosmed_redirect_page.dart';
+
 void main() {
   final expirationDate = DateTime.parse('2025-09-07');
   final currentDate = DateTime.now();
@@ -13,46 +15,70 @@ void main() {
     runApp(const MyApp());
   }
 }
+
+// THIS CLASS WAS LIKELY MISSING
 class ExpiredAppPage extends StatelessWidget {
   const ExpiredAppPage({super.key});
+
   @override
   Widget build(BuildContext context) {
-    // ... 此處程式碼不變 ...
-    return Container(); // Placeholder
+    return const MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: Scaffold(
+        body: Center(
+          child: Text(
+            'This application has expired.',
+            style: TextStyle(color: Colors.red, fontSize: 22),
+          ),
+        ),
+      ),
+    );
   }
 }
+
+// THIS CLASS WAS LIKELY MISSING
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'icash Pay Demo',
-      theme: ThemeData(primarySwatch: Colors.blue, useMaterial3: true, colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue)),
+      theme: ThemeData(
+          primarySwatch: Colors.blue,
+          useMaterial3: true,
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue)),
       home: const HomePage(),
       debugShowCheckedModeBanner: false,
     );
   }
 }
+
+// THIS IS THE UPDATED HOMEPAGE
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
   @override
   State<HomePage> createState() => _HomePageState();
 }
+
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
-  // --- 2. 在頁面列表中加入新的 UAT 頁面 ---
+
   static const List<Widget> _widgetOptions = <Widget>[
     TopUpPage(),
     PaymentPage(),
     CosmedPaymentPage(),
+    CosmedRedirectPage(), // Our new page
     RidePaymentPage(),
-    TopUpPageUat(), // <--- 加入新的 UAT 頁面
+    TopUpPageUat(),
   ];
+
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -60,13 +86,14 @@ class _HomePageState extends State<HomePage> {
         child: _widgetOptions.elementAt(_selectedIndex),
       ),
       bottomNavigationBar: BottomNavigationBar(
-        // --- 3. 在導航欄中加入新的按鈕 ---
         items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(icon: Icon(Icons.add_card), label: '儲值(SIT)'), // 修改標籤
+          BottomNavigationBarItem(icon: Icon(Icons.add_card), label: '儲值(SIT)'),
           BottomNavigationBarItem(icon: Icon(Icons.qr_code_scanner), label: '反掃付款'),
           BottomNavigationBarItem(icon: Icon(Icons.store), label: '康是美扣款'),
+          BottomNavigationBarItem(icon: Icon(Icons.open_in_new), label: '康是美跳轉'),
           BottomNavigationBarItem(icon: Icon(Icons.directions_bus), label: '乘車碼扣款'),
-          BottomNavigationBarItem(icon: Icon(Icons.add_moderator_outlined), label: '儲值(UAT)'), // <--- 新增 UAT 按鈕
+          BottomNavigationBarItem(
+              icon: Icon(Icons.add_moderator_outlined), label: '儲值(UAT)'),
         ],
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
