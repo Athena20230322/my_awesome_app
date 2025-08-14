@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:typed_data';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:encrypt/encrypt.dart' as encrypt;
@@ -8,8 +9,7 @@ import 'package:asn1lib/asn1lib.dart';
 import 'dart:io'; // 用於建立 mTLS 連線
 import 'package:flutter/services.dart' show rootBundle; // 用於讀取 assets
 import 'package:http/io_client.dart'; // 用於建立 mTLS Client
-import 'package:shared_preferences/shared_preferences.dart'; // 用於儲存 TxnNo
-
+import 'package:shared_preferences/shared_preferences.dart'; // 用於儲存資料
 // --- 基底加密與工具類別 (維持不變) ---
 class _CryptoUtils {
   static String encryptAES_CBC_256(String plainText, String key, String iv) {
@@ -19,7 +19,6 @@ class _CryptoUtils {
     final encrypted = encrypter.encrypt(plainText, iv: encrypt.IV(Uint8List.fromList(ivUtf8)));
     return encrypted.base64;
   }
-
   static String decryptAES_CBC_256(String encryptedBase64, String key, String iv) {
     final keyUtf8 = utf8.encode(key);
     final ivUtf8 = utf8.encode(iv);
@@ -27,7 +26,6 @@ class _CryptoUtils {
     final decrypted = encrypter.decrypt(encrypt.Encrypted.fromBase64(encryptedBase64), iv: encrypt.IV(Uint8List.fromList(ivUtf8)));
     return decrypted;
   }
-
   static String signData(String dataToSign, String privateKeyPem) {
     final privateKey = _parsePrivateKeyFromPem(privateKeyPem);
     final signer = pc.RSASigner(pc.SHA256Digest(), '0609608648016503040201');
@@ -35,7 +33,6 @@ class _CryptoUtils {
     final signature = signer.generateSignature(Uint8List.fromList(utf8.encode(dataToSign)));
     return base64.encode(signature.bytes);
   }
-
   static pc.RSAPrivateKey _parsePrivateKeyFromPem(String pem) {
     final cleanPem = pem.replaceAll('-----BEGIN PRIVATE KEY-----', '').replaceAll('-----END PRIVATE KEY-----', '').replaceAll(RegExp(r'\s'), '');
     final bytes = base64.decode(cleanPem);
@@ -58,7 +55,6 @@ class _CryptoUtils {
     final q = (innerSeq.elements[5] as ASN1Integer).valueAsBigInteger;
     return pc.RSAPrivateKey(modulus, privateExponent, p, q);
   }
-
   static Map<String, String> getCurrentTime() {
     final now = DateTime.now();
     return {
@@ -67,8 +63,7 @@ class _CryptoUtils {
     };
   }
 }
-
-// --- 處理「現金儲值」和「反掃付款」的服務 ---
+// --- 處理「現金儲值」、「反掃付款」與「反掃退款」的服務 ---
 class GeneralApiService {
   static const String _aesKey = "VhoGVCInVF2UJ1cQBVZCF48lGUVIoCng";
   static const String _aesIV = "z3P4Se8qTFE0F1xI";
@@ -78,63 +73,113 @@ class GeneralApiService {
 MIIEowIBAAKCAQEA0hXyO7E10c4WR/S1XUFUyvlLS8wX/3RoL9nE4kwWJC+nTy8AFSVBgNz2KPnv3If+q8lG3bqq6TCiBmZxP33hbQH1H/cZPHag644nHlHc0/ZSunXB92jprH4xf96wfev12wqrMbCnYKytInEJnuHN+n3eq0LuyQ/WRcPVROJWxYFUO+uGLbFohtmppb0f/cSKOr0hVP15qZAEVSQwYHhu1CJAI/XoRLkZd87A2KHzvVJ2qkbjRbzXemRToE0v3GrWoUoBIMW3cJxgKieMW/HhQHfnz8njTf4nYlA4OSi2U43OA3Z9T+9gB5I8FvfOokt/LfhvO5q/l7QWB+yaX2hvuQIDAQABAoIBAAd57PYnWws1mpDiej7Ql6AmiYGvyG3YmmmThiBohUQx5vIYMdhOzFs14dO4+0p9k3hRECLNZQ4p4yY3qJGSHP7YWj0SOdVvQlBHrYg0cReg9TY6ARZZJzGyhvfuOJkul7/9C/UXfIlh88JdQ/KhxgcDSjSNi/pfRCiU7MbICD78h/pCS1zIWHaICZ2aL5rV2o5JwCcvDP8p3F+LFW/5u5kK0D0Pd29FXhf5MKHC4Mgrn2I44Uyhdud2Mf7wdvYvvcv2Nzn/EvM7uYZpkEyC3Y1Ow037fZjO3pVCVRt8Mbo4B75ORqXQnr1SbKXWXM/unUEIfMhsBRhx/diDCO8xyiECgYEA8UXIvYWREf+EN5EysmaHcv1jEUgFym8xUiASwwAv+LE9jQJSBiVym13rIGs01k1RN9z3/RVc+0BETTy9qEsUzwX9oTxgqlRk8R3TK7YEg6G/W/7D5DDM9bS/ncU7PlKA/FaEasHCfjs0IY5yJZFYrcA2QvvCl1X1NUZ4Hyumk1ECgYEA3ujTDbDNaSy/++4W/Ljp5pIVmmO27jy30kv1d3fPG6HRtPvbwRyUk/Y9PQpVpd7Sx/+GN+95Z3/zy1IHrbHN5SxE+OGzLrgzgj32EOU+ZJk5uj9qNBkNXh5prcOcjGcMcGL9OAC2oaWaOxrWin3fAzDsCoGrlzSzkVANnBRB6+kCgYEA2EaA0nq3dxW/9HugoVDNHCPNOUGBh1wzLvX3O3ughOKEVTF+S2ooGOOQkGfpXizCoDvgxKnwxnxufXn0XLao+YbaOz0/PZAXSBg/IlCwLTrBqXpvKM8h+yLCHXAeUhhs7UW0v2neqX7ylR32bnyirGW/fj3lyfjQrKf1p6NeV3ECgYB2X+fspk5/Iu+VJxv3+27jLgLg6UE1BPONbx8c4XgPsYB+/xz1UWsppCNjLgDLxCflY7HwNHEhYJakC5zeRcUUhcze6mTQU6uu556r3EGlBKXeXVzV69Pofngaef3Bpdu6NydHvUE/WIUuDBOQmkV7GVjQP4pTEv6lFYEUuMFFOQKBgHfINuaiIlITl/u59LPrvhTZoq6qg7N/3wVeAjYvbpv+b2cFgvOMQAr+S8eCDzijy2z4MENBTr/q6mkKe4NHFGtodP+bjSYEG+GnBEG+EUpAx3Wh/BL2f/sIiSOH9ODB6B847F+apa0OTawmslgGna9/985egGMto9g16EQ4ib1M
 -----END PRIVATE KEY-----
 ''';
-  Future<String> performTopUp({required String topUpAmt, required String buyerId}) async {
-    final timeInfo = _CryptoUtils.getCurrentTime();
-    final data = { "PlatformID": "10000266", "MerchantID": "10000266", "Ccy": "TWD", "TopUpAmt": topUpAmt, "OPSeq": timeInfo['tradeNo'], "StoreId": "982351", "StoreName": "鑫和睦", "PosNo": "01", "OPTime": timeInfo['tradeDate'], "CorpID": "22555003", "PaymentNo": "038", "Remark": "123456", "Itemlist": [{}], "BuyerID": buyerId, };
-    return _postRequest(Uri.parse('https://icp-payment-stage.icashpay.com.tw/api/V2/Payment/Pos/SETTopUp'), json.encode(data));
-  }
-
-  // --- ✨ 以下為修改的函數 ✨ ---
-  Future<String> performPayment({required String txAmt, required String buyerId}) async {
-    final timeInfo = _CryptoUtils.getCurrentTime();
-    final data = {
-      "PlatformID": "10000266",
-      "MerchantID": "10000266",
-      "Ccy":"TWD",
-      "TxAmt": "36", // ✨ 修改點：將金額固定為 "36"
-      "NonRedeemAmt":"",
-      "NonPointAmt":"",
-      "StoreId":"217477",
-      "StoreName": "見晴",
-      "PosNo":"01",
-      "OPSeq": timeInfo['tradeNo'],
-      "OPTime": timeInfo['tradeDate'],
-      "ReceiptNo":"",
-      "ReceiptReriod":"",
-      "TaxID":"",
-      "CorpID":"22555003",
-      "Vehicle":"", "Donate":"",
-      "ItemAmt": "36", // ✨ 修改點：將金額固定為 "36"
-      "UtilityAmt":"",
-      "CommAmt":"",
-      "ExceptAmt1":"",
-      "ExceptAmt2":"",
-      "BonusType":"ByWallet",
-      "BonusCategory":"",
-      "BonusID":"",
-      "PaymentNo": "038",
-      "Remark": "123456",
-      "ReceiptPrint":"N",
-      "Itemlist": [{}],
-      "BuyerID": buyerId
-    };
-    return _postRequest(Uri.parse('https://icp-payment-stage.icashpay.com.tw/api/V2/Payment/Pos/SETPay'), json.encode(data));
-  }
-
+  /// :闪闪发光: **1. 修改底層請求函式，讓它只回傳解密後的純 JSON 字串**
+  ///    錯誤處理改為拋出例外
   Future<String> _postRequest(Uri url, String jsonDataString) async {
     final encdata = _CryptoUtils.encryptAES_CBC_256(jsonDataString, _aesKey, _aesIV);
     final signature = _CryptoUtils.signData(encdata, _privateKey);
-    final response = await http.post(url, headers: { 'X-iCP-EncKeyID': _encKeyId, 'X-iCP-Signature': signature, 'Content-Type': 'application/x-www-form-urlencoded', }, body: {'EncData': encdata},);
-    if (response.statusCode == 200) {
-      final responseBody = json.decode(response.body);
-      final decryptedData = _CryptoUtils.decryptAES_CBC_256(responseBody['EncData'], _aesKey, _aesIV);
-      return "請求成功！\n解密後的回應：\n$decryptedData";
-    } else {
-      return "請求失敗：\n狀態碼: ${response.statusCode}\n回應: ${response.body}";
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'X-iCP-EncKeyID': _encKeyId,
+          'X-iCP-Signature': signature,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: {'EncData': encdata},
+      );
+      if (response.statusCode == 200) {
+        final responseBody = json.decode(response.body);
+        // 直接回傳解密後的原始 JSON 字串
+        return _CryptoUtils.decryptAES_CBC_256(responseBody['EncData'], _aesKey, _aesIV);
+      } else {
+        // 網路請求失敗，拋出例外
+        throw Exception("請求失敗：\n狀態碼: ${response.statusCode}\n回應: ${response.body}");
+      }
+    } catch (e) {
+      // 捕捉其他所有可能的錯誤 (如網路中斷)
+      throw Exception("請求時發生無法預期的錯誤: $e");
+    }
+  }
+  /// :闪闪发光: **2. 修改付款函式，以處理純 JSON 並儲存資料**
+  Future<String> performPayment({required String txAmt, required String buyerId}) async {
+    final timeInfo = _CryptoUtils.getCurrentTime();
+    final data = {
+      "PlatformID": "10000266", "MerchantID": "10000266", "Ccy":"TWD", "TxAmt": "36",
+      "NonRedeemAmt":"", "NonPointAmt":"", "StoreId":"217477", "StoreName": "見晴",
+      "PosNo":"01", "OPSeq": timeInfo['tradeNo'], "OPTime": timeInfo['tradeDate'],
+      "ReceiptNo":"", "ReceiptReriod":"", "TaxID":"", "CorpID":"22555003",
+      "Vehicle":"", "Donate":"", "ItemAmt": "36", "UtilityAmt":"", "CommAmt":"",
+      "ExceptAmt1":"", "ExceptAmt2":"", "BonusType":"ByWallet", "BonusCategory":"",
+      "BonusID":"", "PaymentNo": "038", "Remark": "123456", "ReceiptPrint":"N",
+      "Itemlist": [{}], "BuyerID": buyerId
+    };
+    try {
+      // 呼叫重構後的 _postRequest
+      final rawDecryptedJson = await _postRequest(
+        Uri.parse('https://icp-payment-stage.icashpay.com.tw/api/V2/Payment/Pos/SETPay'),
+        json.encode(data),
+      );
+      // 解析可靠的純 JSON
+      final decodedResponse = json.decode(rawDecryptedJson);
+      // 如果交易成功 (RtnCode 是 '0000')，就儲存退款需要的資料
+      /// :闪闪发光: **唯一的修改點在這裡**
+      ///    將判斷條件從 'RtnCode' 改為 'ChannelStatusCode'
+      if (decodedResponse['ChannelStatusCode'] == '0000') {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('refund_op_seq', decodedResponse['OPSeq']);
+        await prefs.setString('refund_bank_seq', decodedResponse['BankSeq']);
+        await prefs.setString('refund_buyer_id', buyerId);
+        debugPrint(':白色的对勾: 退款資訊已成功儲存！'); // 加上日誌方便除錯
+      } else {
+        debugPrint(':警告: 交易未完全成功，未儲存退款資訊。ChannelStatusCode: ${decodedResponse['ChannelStatusCode']}');
+      }
+      const jsonEncoder = JsonEncoder.withIndent('  ');
+      final prettyJson = jsonEncoder.convert(decodedResponse);
+      return "請求成功！\n解密後的回應：\n$prettyJson";
+    } catch (e) {
+      return e.toString();
+    }
+  }
+
+  /// :闪闪发光: **3. 修改退款函式，以處理純 JSON**
+  Future<String> performRefund({ required String opSeq, required String bankSeq, required String buyerId, }) async {
+    final timeInfo = _CryptoUtils.getCurrentTime();
+    final data = {
+      "OPSeq": opSeq, "BankSeq": bankSeq, "TxAmt": "36", "OPRefundSeq": bankSeq,
+      "OPRefundTime": timeInfo['tradeDate'], "StoreId": "217477", "StoreName": "見晴",
+      "PosNo": "01", "CorpID": "22555003", "Remark": "123456", "BuyerID": buyerId,
+    };
+    try {
+      final rawDecryptedJson = await _postRequest(
+        Uri.parse('https://icp-payment-stage.icashpay.com.tw/api/V2/Payment/Pos/SETPayRefund'),
+        json.encode(data),
+      );
+      // 格式化成功訊息並回傳給 UI
+      const jsonEncoder = JsonEncoder.withIndent('  ');
+      final prettyJson = jsonEncoder.convert(json.decode(rawDecryptedJson));
+      return "請求成功！\n解密後的回應：\n$prettyJson";
+    } catch (e) {
+      return e.toString();
+    }
+  }
+  // 其他函式 (如 performTopUp) 也應遵循此模式，此處為簡潔省略，但建議一併修改
+  Future<String> performTopUp({required String topUpAmt, required String buyerId}) async {
+    final timeInfo = _CryptoUtils.getCurrentTime();
+    final data = { "PlatformID": "10000266", "MerchantID": "10000266", "Ccy": "TWD", "TopUpAmt": topUpAmt, "OPSeq": timeInfo['tradeNo'], "StoreId": "982351", "StoreName": "鑫和睦", "PosNo": "01", "OPTime": timeInfo['tradeDate'], "CorpID": "22555003", "PaymentNo": "038", "Remark": "123456", "Itemlist": [{}], "BuyerID": buyerId, };
+    try {
+      final rawDecryptedJson = await _postRequest(
+        Uri.parse('https://icp-payment-stage.icashpay.com.tw/api/V2/Payment/Pos/SETTopUp'),
+        json.encode(data),
+      );
+      const jsonEncoder = JsonEncoder.withIndent('  ');
+      final prettyJson = jsonEncoder.convert(json.decode(rawDecryptedJson));
+      return "請求成功！\n解密後的回應：\n$prettyJson";
+    } catch (e) {
+      return e.toString();
     }
   }
 }
-
 // --- 處理「康是美」相關的服務 (維持不變) ---
 class CosmedApiService {
   // --- 常數 (與 JS 檔案一致，不需變更) ---
