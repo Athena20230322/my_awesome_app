@@ -5,6 +5,7 @@ import 'pages/cosmed_payment_page.dart';
 import 'pages/ride_payment_page.dart';
 import 'pages/top_up_page_uat.dart';
 import 'pages/cosmed_redirect_page.dart';
+import 'pages/fisc_payment_page.dart';
 
 void main() {
   final expirationDate = DateTime.parse('2025-09-07');
@@ -16,7 +17,6 @@ void main() {
   }
 }
 
-// THIS CLASS WAS LIKELY MISSING
 class ExpiredAppPage extends StatelessWidget {
   const ExpiredAppPage({super.key});
 
@@ -36,7 +36,6 @@ class ExpiredAppPage extends StatelessWidget {
   }
 }
 
-// THIS CLASS WAS LIKELY MISSING
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -54,7 +53,6 @@ class MyApp extends StatelessWidget {
   }
 }
 
-// THIS IS THE UPDATED HOMEPAGE
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
   @override
@@ -68,9 +66,10 @@ class _HomePageState extends State<HomePage> {
     TopUpPage(),
     PaymentPage(),
     CosmedPaymentPage(),
-    CosmedRedirectPage(), // Our new page
+    CosmedRedirectPage(),
     RidePaymentPage(),
     TopUpPageUat(),
+    FiscPaymentPage(),
   ];
 
   void _onItemTapped(int index) {
@@ -92,12 +91,13 @@ class _HomePageState extends State<HomePage> {
           BottomNavigationBarItem(icon: Icon(Icons.store), label: '康是美扣款'),
           BottomNavigationBarItem(icon: Icon(Icons.open_in_new), label: '康是美跳轉'),
           BottomNavigationBarItem(icon: Icon(Icons.directions_bus), label: '乘車碼扣款'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.add_moderator_outlined), label: '儲值(UAT)'),
+          BottomNavigationBarItem(icon: Icon(Icons.add_moderator_outlined), label: '儲值(UAT)'),
+          BottomNavigationBarItem(icon: Icon(Icons.shield), label: 'FISC付款'),
         ],
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
-        type: BottomNavigationBarType.fixed,
+        // ✨ 唯一的修改在這裡
+        type: BottomNavigationBarType.shifting,
         selectedItemColor: Theme.of(context).colorScheme.primary,
         unselectedItemColor: Colors.grey,
       ),

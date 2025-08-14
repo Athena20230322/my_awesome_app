@@ -5,6 +5,10 @@ import 'package:intl/intl.dart';
 import 'package:encrypt/encrypt.dart' as encrypt;
 import 'package:pointycastle/export.dart' as pc;
 import 'package:asn1lib/asn1lib.dart';
+import 'dart:io'; // 用於建立 mTLS 連線
+import 'package:flutter/services.dart' show rootBundle; // 用於讀取 assets
+import 'package:http/io_client.dart'; // 用於建立 mTLS Client
+import 'package:shared_preferences/shared_preferences.dart'; // 用於儲存 TxnNo
 
 // --- 基底加密與工具類別 (維持不變) ---
 class _CryptoUtils {
@@ -252,6 +256,116 @@ MIIEowIBAAKCAQEAyTVkMuX3QXVAlISnNwRgWmVaOEkv/sq0P++q/gAeKBoqMh20jCOO2tmGZ0XsBuvF
       return "請求成功！\n解密後的回應：\n$decryptedData";
     } else {
       return "請求失敗：\n狀態碼: ${response.statusCode}\n回應: ${response.body}";
+    }
+  }
+}
+
+// --- ✨✨✨ 以下為新增的類別 ✨✨✨ ---
+
+// --- 處理「FISC QR Code 掃碼購物」的服務 ---
+class FiscApiService {
+  // --- 從 Node.js 範例中移植過來的設定 ---
+  static const String _host = 'openapigw.fisc-test.com.tw';
+  static const int _port = 443;
+  static const String _path = '/openAPI/FiscQaAPI/v1.0.0/qrPurchase/IntIssMerchScanRequest';
+  static const String _bankId = '392';
+  static const String _keyId = 'ff1d7a7f-4ac1-47ff-9559-6a0b881964db';
+  static const String _countryCode = '410';
+  static const String _defaultTxnNo = '1000277'; // 起始值
+
+  /// 讀取本地儲存的交易序號，並自動+1後回存
+  Future<String> _getNextTxnNo() async {
+    final prefs = await SharedPreferences.getInstance();
+    // 從 shared_preferences 讀取上次的序號，若沒有則使用預設值
+    final lastTxnNo = prefs.getString('fisc_txn_no') ?? _defaultTxnNo;
+
+    // 將字串轉為數字，+1後再轉回字串
+    final nextTxnNo = (int.parse(lastTxnNo) + 1).toString();
+
+    // 將新的序號存回 shared_preferences
+    await prefs.setString('fisc_txn_no', nextTxnNo);
+
+    return nextTxnNo;
+  }
+
+  /// 建立一個帶有客戶端憑證的 mTLS HttpClient
+  Future<http.Client> _createMTLSClient() async {
+    // 1. 從 assets 讀取憑證和金鑰檔案
+    final certBytes = utf8.encode(await rootBundle.loadString('assets/cert.pem'));
+    final keyBytes = utf8.encode(await rootBundle.loadString('assets/key.pem'));
+    final caBytes = utf8.encode(await rootBundle.loadString('assets/ca.pem'));
+
+    // 2. 建立 SecurityContext
+    final securityContext = SecurityContext(withTrustedRoots: true);
+    // 載入客戶端憑證鏈
+    securityContext.useCertificateChainBytes(certBytes);
+    // 載入客戶端私鑰
+    securityContext.usePrivateKeyBytes(keyBytes);
+    // 設定要信任的伺服器 CA (可選，但建議)
+    securityContext.setTrustedCertificatesBytes(caBytes);
+
+    // 3. 建立 dart:io 的 HttpClient
+    final httpClient = HttpClient(context: securityContext);
+
+    // 4. (重要) 設定憑證驗證回呼
+    // 這相當於 Node.js 中的 `rejectUnauthorized: false`
+    // 在測試環境中，如果伺服器憑證是自簽的，這可以略過驗證
+    // 在生產環境中，應設為 false 或移除此行
+    httpClient.badCertificateCallback = (X509Certificate cert, String host, int port) => true;
+
+    // 5. 將 dart:io 的 HttpClient 包裝成 http 套件可用的 IOClient
+    return IOClient(httpClient);
+  }
+
+  /// 執行 QR Code 掃碼購物請求
+  Future<String> performQrPurchase({required String buyerId, required String txAmt}) async {
+    http.Client? client;
+    try {
+      // 建立 mTLS 客戶端
+      client = await _createMTLSClient();
+
+      // 準備請求的 body
+      final requestBody = {
+        "BankID": _bankId,
+        "TxnNo": await _getNextTxnNo(),
+        "TxnAmount": txAmt,
+        "CountryCode": _countryCode,
+        "BuyerID": buyerId,
+      };
+
+      final bodyString = json.encode(requestBody);
+
+      // 準備請求的 headers
+      final headers = {
+        'Content-Type': 'application/json',
+        'X-KeyId': _keyId,
+      };
+
+      // 建立請求的 URL
+      final url = Uri.https(_host, _path);
+
+      // 發送 POST 請求
+      final response = await client.post(
+        url,
+        headers: headers,
+        body: bodyString,
+      );
+
+      // 處理回應
+      if (response.statusCode == 200) {
+        // 美化 JSON 輸出
+        const jsonEncoder = JsonEncoder.withIndent('  ');
+        final prettyPrintedJson = jsonEncoder.convert(json.decode(response.body));
+        return "請求成功！\n回應：\n$prettyPrintedJson";
+      } else {
+        return "請求失敗：\n狀態碼: ${response.statusCode}\n回應: ${response.body}";
+      }
+    } catch (e) {
+      // 捕捉任何可能的錯誤
+      return "請求時發生錯誤：\n$e";
+    } finally {
+      // 無論成功或失敗，都要關閉 client
+      client?.close();
     }
   }
 }
