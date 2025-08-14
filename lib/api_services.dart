@@ -68,7 +68,7 @@ class _CryptoUtils {
   }
 }
 
-// --- 處理「現金儲值」和「反掃付款」的服務 (維持不變) ---
+// --- 處理「現金儲值」和「反掃付款」的服務 ---
 class GeneralApiService {
   static const String _aesKey = "VhoGVCInVF2UJ1cQBVZCF48lGUVIoCng";
   static const String _aesIV = "z3P4Se8qTFE0F1xI";
@@ -83,11 +83,44 @@ MIIEowIBAAKCAQEA0hXyO7E10c4WR/S1XUFUyvlLS8wX/3RoL9nE4kwWJC+nTy8AFSVBgNz2KPnv3If+
     final data = { "PlatformID": "10000266", "MerchantID": "10000266", "Ccy": "TWD", "TopUpAmt": topUpAmt, "OPSeq": timeInfo['tradeNo'], "StoreId": "982351", "StoreName": "鑫和睦", "PosNo": "01", "OPTime": timeInfo['tradeDate'], "CorpID": "22555003", "PaymentNo": "038", "Remark": "123456", "Itemlist": [{}], "BuyerID": buyerId, };
     return _postRequest(Uri.parse('https://icp-payment-stage.icashpay.com.tw/api/V2/Payment/Pos/SETTopUp'), json.encode(data));
   }
+
+  // --- ✨ 以下為修改的函數 ✨ ---
   Future<String> performPayment({required String txAmt, required String buyerId}) async {
     final timeInfo = _CryptoUtils.getCurrentTime();
-    final data = { "PlatformID": "10000266", "MerchantID": "10000266", "Ccy":"TWD", "TxAmt": txAmt, "NonRedeemAmt":"", "NonPointAmt":"", "StoreId":"217477", "StoreName": "見晴", "PosNo":"01", "OPSeq": timeInfo['tradeNo'], "OPTime": timeInfo['tradeDate'], "ReceiptNo":"", "ReceiptReriod":"", "TaxID":"", "CorpID":"22555003", "Vehicle":"", "Donate":"", "ItemAmt": txAmt, "UtilityAmt":"", "CommAmt":"", "ExceptAmt1":"", "ExceptAmt2":"", "BonusType":"ByWallet", "BonusCategory":"", "BonusID":"", "PaymentNo": "038", "Remark": "123456", "ReceiptPrint":"N", "Itemlist": [{}], "BuyerID": buyerId };
+    final data = {
+      "PlatformID": "10000266",
+      "MerchantID": "10000266",
+      "Ccy":"TWD",
+      "TxAmt": "36", // ✨ 修改點：將金額固定為 "36"
+      "NonRedeemAmt":"",
+      "NonPointAmt":"",
+      "StoreId":"217477",
+      "StoreName": "見晴",
+      "PosNo":"01",
+      "OPSeq": timeInfo['tradeNo'],
+      "OPTime": timeInfo['tradeDate'],
+      "ReceiptNo":"",
+      "ReceiptReriod":"",
+      "TaxID":"",
+      "CorpID":"22555003",
+      "Vehicle":"", "Donate":"",
+      "ItemAmt": "36", // ✨ 修改點：將金額固定為 "36"
+      "UtilityAmt":"",
+      "CommAmt":"",
+      "ExceptAmt1":"",
+      "ExceptAmt2":"",
+      "BonusType":"ByWallet",
+      "BonusCategory":"",
+      "BonusID":"",
+      "PaymentNo": "038",
+      "Remark": "123456",
+      "ReceiptPrint":"N",
+      "Itemlist": [{}],
+      "BuyerID": buyerId
+    };
     return _postRequest(Uri.parse('https://icp-payment-stage.icashpay.com.tw/api/V2/Payment/Pos/SETPay'), json.encode(data));
   }
+
   Future<String> _postRequest(Uri url, String jsonDataString) async {
     final encdata = _CryptoUtils.encryptAES_CBC_256(jsonDataString, _aesKey, _aesIV);
     final signature = _CryptoUtils.signData(encdata, _privateKey);
@@ -102,7 +135,7 @@ MIIEowIBAAKCAQEA0hXyO7E10c4WR/S1XUFUyvlLS8wX/3RoL9nE4kwWJC+nTy8AFSVBgNz2KPnv3If+
   }
 }
 
-// --- 處理「康是美」相關的服務 (修改此類別) ---
+// --- 處理「康是美」相關的服務 (維持不變) ---
 class CosmedApiService {
   // --- 常數 (與 JS 檔案一致，不需變更) ---
   static const String _aesKey = "xtzXnXnjDkhVWXNZlPJ2gMGAElKF28Kw";
@@ -115,7 +148,6 @@ class CosmedApiService {
 MIIEogIBAAKCAQEAyScTCR4BQ17b2UP33jhPcdcKQfWyWxk5xoYsxw7+xoWsc6e6KkxqQYY2BMZoMTy/t7Ko8sZnMLDYgaANlEnsDGidy/XoTbXLKNMPXiw9xsCsuQq5DoGlNimu5uvRgTLWsJqb34UBl5lOCHmlvHvdLzw4fO/zlMuSf4pBSFmwVFytJxuNgbXIhZyuVoWiFNR0SIzmouclyHjANaBnRgrXA/KXdvz1CjbCMlZz17L8n6POid9nMvGfUdGfkKxxooYSNyND4lVcb41C9f+l2pXroG9owVwUUgzIa38fmIi3VzxNrJ4vyYlNH5myMU2g7XKgOtWRxauP1jJS6xUEUVDwaQIDAQABAoIBACL6THEVaprQb+JD02Is4IOnJP17P9xfcpB23GpwzRSwQeCKlfCtAP0L3XDPH2cQbTYANyigH2l0FvHTZwkWIZm2x1mkFRUOO5mJue5iOwvIjUBQAQXovVXBwcwdzXxt3q8u81PWyQQXgF4w6QTxdPC1xAzVnMGO9JaA8AEot2SzuYckLjEGXrmUPLZCdJS5wbgwCwJuCxlHjWI0sihRgWs5FbxiHrTTlepSacO0gl4/r2225fbTy4SeSQDf4mKmXX9cEHMSpyCwXKFsQheXYXXvS/514Jomiou2ijTXywibxrv41KfdSK8NYCP85d0hGr0apvoomd7p3+cUuKUrsxECgYEA+t1xFcx79B2s47hcD1cv/AAFt1mjGCqS2AQnDsiCAMEERfx2vudoktUu+7abehWyo0NgkJqmG/xmY2LY/bMGP+OUnUhVDyPBQs4/Q6WIZmrIsIBYOoRzhMIE7VPUwEcD1bMGC0oGrFO3TjNfEd/him9Z+9jK5JFMYXeYj4ZQusMCgYEAzUUifEN0meksTZJo8qK5FPLbCdm7FAMEN/IrKacOO/ZROnFFtxpltezqon5mt2bxIaEbpPSgpNc4bhFpWXX/O/VaW9xVy6YGG5x0YFLaGVpLpvZNdsf0/eIP8X75hDfftKIskhtd9Frjk6zEu+989dipDQ5nRdUfekfNVTYC/WMCgYAOVs358wA6yd9x/L22WsNxYgbxnfwGi5htJH+fBrL3nBDEd1PKQavmiKzw0lU8uzTExDsmyNAp1Vl84M+KYMtAp599Bf9mqCKJ0QQot7N+NyhVfmCMp7l6oyRo9Fu6ydRcSKlVx9ttyjM2ExWiDev0X70C+jdOrUdyYsWjnofKxQKBgE9WMzf4Em8SUk9BEVMGVaalHse14bqgV9cPwGL+8F94mniOIzXb/AfOo/leBXFJVlV7IWYmLpjHnkXccO1kz9tqvxvWE0r8xkuRsuEv5J/76FWFyPbp3eTqpOLgAqx5s/rq23M1JKE3J9KB6iABNjkHHn+vW3cAIoRukAwpLgqlAoGAA3YT/HRvyTF4P+jUBoORsjYbK2/4kJ6Zi5hTRGbkFn9kmRIdJ0sflGrV7y8Av/aE8KBTOqFETvBZQoW47X3BSjDYVqQhvlhtNjEV3cqd7PFLpF8JELh+MRDgvRA+iwozDiG89+lS2cogP8smW6i2VYQsg1fLbQWW5J5lgBHLMq4=
 -----END PRIVATE KEY-----''';
 
-  // --- ✨ 此處為主要修改點 ---
   Future<String> getPaymentUrl({required String totalAmount}) async {
     final timeInfo = _CryptoUtils.getCurrentTime();
     final data = {
@@ -157,13 +189,9 @@ MIIEogIBAAKCAQEAyScTCR4BQ17b2UP33jhPcdcKQfWyWxk5xoYsxw7+xoWsc6e6KkxqQYY2BMZoMTy/
         final decryptedData = _CryptoUtils.decryptAES_CBC_256(responseBody['EncData'], _aesKey, _aesIV);
         final parsedData = json.decode(decryptedData);
 
-        // 【修正後的判斷邏輯】
-        // 舊邏輯: if (parsedData['PaymentURL'] != null && parsedData['RtnCode'] == 1)
-        // 新邏輯: 只要解密後的回應中直接含有 PaymentURL 欄位，就視為成功
         if (parsedData['PaymentURL'] != null && (parsedData['PaymentURL'] as String).isNotEmpty) {
-          return parsedData['PaymentURL']; // 成功，回傳 URL
+          return parsedData['PaymentURL'];
         } else {
-          // API 有回傳但內容是錯誤訊息
           final jsonEncoder = JsonEncoder.withIndent('  ');
           final prettyError = jsonEncoder.convert(parsedData);
           throw Exception('API 回應錯誤 (未包含有效的 PaymentURL):\n$prettyError');
@@ -176,7 +204,6 @@ MIIEogIBAAKCAQEAyScTCR4BQ17b2UP33jhPcdcKQfWyWxk5xoYsxw7+xoWsc6e6KkxqQYY2BMZoMTy/
     }
   }
 
-  // --- 現有的「扣款」API (維持不變) ---
   Future<String> performDeduction({required String totalAmount, required String barCode}) async {
     final timeInfo = _CryptoUtils.getCurrentTime();
     final data = {
@@ -230,7 +257,6 @@ MIIEogIBAAKCAQEAyScTCR4BQ17b2UP33jhPcdcKQfWyWxk5xoYsxw7+xoWsc6e6KkxqQYY2BMZoMTy/
 
 // --- 處理「UAT 現金儲值」的服務 (維持不變) ---
 class UatGeneralApiService {
-  // --- UAT 環境參數 ---
   static const String _aesKey = "wetEi4zKeJTDLcXCvqrDduAThvoeUudd";
   static const String _aesIV = "zlHw6q30q2qmWlzD";
   static const String _encKeyId = "117497";
@@ -259,8 +285,6 @@ MIIEowIBAAKCAQEAyTVkMuX3QXVAlISnNwRgWmVaOEkv/sq0P++q/gAeKBoqMh20jCOO2tmGZ0XsBuvF
     }
   }
 }
-
-// --- ✨✨✨ 以下為新增的類別 ✨✨✨ ---
 
 // --- 處理「FISC QR Code 掃碼購物」的服務 ---
 class FiscApiService {

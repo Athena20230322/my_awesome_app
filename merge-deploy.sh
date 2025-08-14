@@ -54,7 +54,8 @@ git checkout $MAIN_BRANCH
 
 # 合併功能分支
 # --no-ff 會建立一個合併的 commit，讓歷史紀錄更清楚
-git merge --no-ff "$CURRENT_BRANCH"
+#git merge --no-ff "$CURRENT_BRANCH"
+git merge --no-ff -m "Merge branch '$CURRENT_BRANCH' into $MAIN_BRANCH" "$CURRENT_BRANCH"
 
 # 檢查合併是否成功
 if [ $? -ne 0 ]; then
