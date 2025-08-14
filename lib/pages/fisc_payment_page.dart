@@ -82,6 +82,14 @@ class _FiscPaymentPageState extends State<FiscPaymentPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
+              // ✨ 1. 在這裡新增說明文字
+              const Text(
+                '財經測試時間平日九點至下午五點',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 14, color: Colors.grey),
+              ),
+              const SizedBox(height: 24), // ✨ 2. 增加一些間距
+
               // 金額輸入框
               TextField(
                 controller: _txAmtController,
