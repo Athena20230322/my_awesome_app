@@ -7,7 +7,8 @@ import 'pages/top_up_page_uat.dart';
 import 'pages/cosmed_redirect_page.dart';
 import 'pages/fisc_payment_page.dart';
 import 'pages/refund_page.dart';
-
+// :闪闪发光: 1. Import 我們的新頁面
+import 'pages/simplemart_payment_page.dart';
 void main() {
   // 應用程式的有效期限設定 (此部分邏輯維持不變)
   final expirationDate = DateTime.parse('2025-09-07');
@@ -19,7 +20,6 @@ void main() {
     runApp(const MyApp());
   }
 }
-
 /// 過期頁面 Widget (維持不變)
 class ExpiredAppPage extends StatelessWidget {
   const ExpiredAppPage({super.key});
@@ -38,7 +38,6 @@ class ExpiredAppPage extends StatelessWidget {
     );
   }
 }
-
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
   @override
@@ -54,16 +53,13 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-
 /// 建立一個模型類別來存放每個功能項目的資訊
 class FeatureItem {
   final String title;
   final IconData icon;
   final Widget page;
-
   const FeatureItem({required this.title, required this.icon, required this.page});
 }
-
 /// 所有功能頁面的列表
 /// 未來若要新增功能，只需要在此列表中增加一個 FeatureItem 即可
 final List<FeatureItem> features = [
@@ -74,15 +70,14 @@ final List<FeatureItem> features = [
   FeatureItem(title: '康是美跳轉', icon: Icons.open_in_new, page: const CosmedRedirectPage()),
   FeatureItem(title: '乘車碼扣款', icon: Icons.directions_bus, page: const RidePaymentPage()),
   FeatureItem(title: '儲值(UAT)', icon: Icons.add_moderator_outlined, page: const TopUpPageUat()),
-  // ✨ --- 修改點 --- ✨
+  // :闪闪发光: --- 修改點 --- :闪闪发光:
   FeatureItem(title: '韓國付款', icon: Icons.shield, page: const FiscPaymentPage()),
+  // :闪闪发光: 2. 在列表最後加入新功能
+  FeatureItem(title: '美廉社3DS扣款', icon: Icons.local_grocery_store, page: const SimpleMartPaymentPage()),
 ];
-
-
 /// 新的 HomePage Widget，使用網格佈局
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -108,7 +103,6 @@ class HomePage extends StatelessWidget {
       ),
     );
   }
-
   /// 建立單一網格項目的方法
   Widget _buildFeatureCard(BuildContext context, FeatureItem feature) {
     return Card(
