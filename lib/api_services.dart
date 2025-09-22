@@ -621,3 +621,101 @@ l1IANgNAmBt23/JmkCUYUlb5YoFo9bD+sfo5QpMj51nn1o1TvezQtQ==
     }
   }
 }
+
+// --- :tada: 全新加入：處理「愛金卡褔利社」相關的服務 ---
+class IcashWelfareApiService {
+  // --- 常數 (從您的 .js 檔案移植) ---
+  static const String _aesKey = "ONa3KRM6qFHj3C4uwQUm9VtUCyTrj5Rv";
+  static const String _aesIV = "BgLn0JGKPt1iqkEg";
+  static const String _encKeyId = "274426";
+  static const String _platformId = "10510013";
+  static const String _merchantId = "10510013";
+  static const String _privateKey = '''
+-----BEGIN PRIVATE KEY-----
+MIIEpAIBAAKCAQEA53oCtwOsvIfUKTpatqCeKHsRk5OG0hNhrApKoD0OFExMDi03
+w4JA+kIJAciHOwofBfvWuVwW3ysOfx0DUZrSgDjPkaET1+z7hgG3X2onbYPqZfFy
+7RfkO504BieJUvvYpYSM/sV+XHkIgt3L6VmvBKJoc4k4ak7EaPoOKzU66CWcCf9w
+mKyottARr2KWlXmGtu55So8jYoXbnQlm3AcqEufvHwcqKbtsg6MEJSDPspHXzntU
+H49eg7qG3LzmM3glBEBJaFABshSf5NcWeuoNQ1zoAYQUBAcF/Zb2nRZq+zU7gKMI
+xrPVDJjljOcKqNJd30+UGDwh9s0GmKf3I39gGwIDAQABAoIBAA+EHTR5WZXVoQIW
+eEgvogpinX3/8JSaWfy3P+NX1F7F8n8sxsUjMQnVbVciQvZRKl0zUWRhaOMStskM
+f9FziFKx/C/t1S+vIfkMmmcZ7YSoyAiHU8XSySi51CyNb+YRHaeSqATX5i16q3hi
+N63vpgywekHsW8y8dOv4fwSkb8tpwU2NDkoHm/lv9k2isy6AlKV/ZWODXcbBhkfR
+y8ShjLOuLrQp5Cjgf6XvtpES4nTlPtJ44d2EoAhzp/pOkb5mDVverpZ5B5H6uRBN
+xYhEwxItOIVIimgqKAMeB23DUR6RbcqEVcoDFX493in/SR8B1lXVCQs/EJZ2dQX0
+voZDYPECgYEA6Ifyjpj2ZzLIO8Cn+U/C+9A65bIb5z26oQ14xe3jOKJTBrOBjgTa
+9KzQRZL9eZFiThR98UtjEzPK4sLFqutkGyWRuOVz8cfYPqQqZx62rJn7dbJa2ndn
+kj/S2R6sxckBwtwpJF1aeQPJVBWeeECDO1V8T/rkQzY6yc3c5NpJgDMCgYEA/tbR
+oH5KReI0uOCCgbJZwsgpw4+MZIVWU/LNUQLPMUuVhso92utSTlKE3D64i+4Ju/nC
+ZH7Unf/TpOtfXX2WECsE5pLZYQhYwc/dWpGBNmqLMFAl69QI3EUTvqKOxeUSaJ7C
+BKzlieCjfTG8W0M/uwD5njDM9AzKrVq+sHFPGHkCgYEAjHRhfOTEIT25WO5cB+m3
+2ybCDLByzlCpBFMA2n2AvFrAT9HptYEVSKmB/CR3WxEIEiWqlS92HskwCZygjUc1
+5nfg95ARYr/VzLCYtEUHDmbMTyF2Y3OwadSHZYJz1dw+ZhdZ+o8w8NvqphGQ8Q32
+tsZCGoVvj3GYPQFOJiX8M6UCgYEAztv1gX/CLoP2I/QqO7lYX2I3dIT7g0Uw1CgN
+Pas4IF2oXKeiGihWwTj+nAFVsFBjGnEcuJKzaCWX2REucidVPn6NFdUyGy+5TGm8
+1p2x80f9ABSvE4UkRBjWdDJkDoNps/7aowztrkPoseFDchlejB+4gA5A8AHKK3mz
+vGnduJECgYA4WPflwdwn9OI4o3dVTPM3heFoFgott3Z2vUbeW//yzRgN1E80J0Cv
+q5+UyON2jcDH2KoUbwJ1+vVZkCRMs1fLUHYtnJGOkJ3PtUu5Sg/Un5q7bszevnPt
+kMo1zc154vPzFar+TiglwXaJwJ/rGOR1WcpS3Xf2+gi8WwGgq8XZww==
+-----END PRIVATE KEY-----
+''';
+
+  /// 執行愛金卡褔利社扣款請求
+  Future<String> performDeduction({required String totalAmount, required String barCode}) async {
+    final timeInfo = _CryptoUtils.getCurrentTime();
+    final data = {
+      "PlatformID": _platformId,
+      "MerchantID": _merchantId,
+      "MerchantTradeNo": timeInfo['tradeNo'],
+      "StoreID": "TM01",
+      "StoreName": "愛金卡褔利社九九號店3DS", // 使用指定的店家名稱
+      "MerchantTradeDate": timeInfo['tradeDate'],
+      "TotalAmount": totalAmount,
+      "ItemAmt": totalAmount,
+      "UtilityAmt": "0",
+      "CommAmt": "0",
+      "ItemNonRedeemAmt": "0",
+      "UtilityNonRedeemAmt": "0",
+      "CommNonRedeemAmt": "0",
+      "NonPointAmt": "0",
+      "Item": [
+        {"ItemNo": "001", "ItemName": "測試商品1", "Quantity": "1"},
+        {"ItemNo": "002", "ItemName": "測試商品2", "Quantity": "1"},
+      ],
+      "BarCode": barCode,
+    };
+
+    final jsonDataString = json.encode(data);
+    final encdata = _CryptoUtils.encryptAES_CBC_256(jsonDataString, _aesKey, _aesIV);
+    final signature = _CryptoUtils.signData(encdata, _privateKey);
+
+    try {
+      final response = await http.post(
+        Uri.parse('https://icp-payment-stage.icashpay.com.tw/api/V2/Payment/Pos/DeductICPOF'),
+        headers: {
+          'X-iCP-EncKeyID': _encKeyId,
+          'X-iCP-Signature': signature,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: {'EncData': encdata},
+      );
+
+      if (response.statusCode == 200) {
+        final responseBody = json.decode(response.body);
+        if (responseBody.containsKey('EncData') && responseBody['EncData'] != null) {
+          final decryptedData = _CryptoUtils.decryptAES_CBC_256(responseBody['EncData'], _aesKey, _aesIV);
+          const jsonEncoder = JsonEncoder.withIndent('  ');
+          final prettyPrintedJson = jsonEncoder.convert(json.decode(decryptedData));
+
+          return "原始回應：\n${response.body}\n\n請求成功！\n解密後的回應：\n$prettyPrintedJson";
+        } else {
+          return "請求成功，但回應不含加密資料：\n${response.body}";
+        }
+      } else {
+        throw Exception("請求失敗：\n狀態碼: ${response.statusCode}\n回應: ${response.body}");
+      }
+    } catch (e) {
+      throw Exception("請求時發生無法預期的錯誤: $e");
+    }
+  }
+}

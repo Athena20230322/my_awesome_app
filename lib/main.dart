@@ -9,9 +9,11 @@ import 'pages/fisc_payment_page.dart';
 import 'pages/refund_page.dart';
 // :闪闪发光: 1. Import 我們的新頁面
 import 'pages/simplemart_payment_page.dart';
+// --- :礼花: 新增點 (1/2): Import 我們剛剛建立的「愛金卡褔利社」頁面 ---
+import 'pages/icash_welfare_payment_page.dart';
 void main() {
   // 應用程式的有效期限設定 (此部分邏輯維持不變)
-  final expirationDate = DateTime.parse('2025-09-07');
+  final expirationDate = DateTime.parse('2025-12-07');
   final currentDate = DateTime.now();
   // 檢查是否過期
   if (currentDate.isAfter(expirationDate)) {
@@ -74,6 +76,8 @@ final List<FeatureItem> features = [
   FeatureItem(title: '韓國付款', icon: Icons.shield, page: const FiscPaymentPage()),
   // :闪闪发光: 2. 在列表最後加入新功能
   FeatureItem(title: '美廉社3DS扣款', icon: Icons.local_grocery_store, page: const SimpleMartPaymentPage()),
+  // --- :礼花: 新增點 (2/2): 在列表最後加入「愛金卡褔利社」的新功能 ---
+  FeatureItem(title: '愛金卡褔利社九九號店3DS扣款', icon: Icons.storefront, page: const IcashWelfarePaymentPage()),
 ];
 /// 新的 HomePage Widget，使用網格佈局
 class HomePage extends StatelessWidget {
