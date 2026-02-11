@@ -7,22 +7,24 @@ import 'pages/top_up_page_uat.dart';
 import 'pages/cosmed_redirect_page.dart';
 import 'pages/fisc_payment_page.dart';
 import 'pages/refund_page.dart';
-// :闪闪发光: 1. Import 我們的新頁面
 import 'pages/simplemart_payment_page.dart';
-// --- :礼花: 新增點 (1/2): Import 我們剛剛建立的「愛金卡褔利社」頁面 ---
 import 'pages/icash_welfare_payment_page.dart';
+import 'pages/BooksPaymentPage.dart';
+
+
+// 🌟 1. 嘗試讀取編譯時的日期 (若有下特殊指令)
+const String buildDateEnv = String.fromEnvironment('BUILD_DATE');
+
 void main() {
-  // 應用程式的有效期限設定 (此部分邏輯維持不變)
-  final expirationDate = DateTime.parse('2025-12-07');
+  final expirationDate = DateTime.parse('2026-06-07');
   final currentDate = DateTime.now();
-  // 檢查是否過期
   if (currentDate.isAfter(expirationDate)) {
     runApp(const ExpiredAppPage());
   } else {
     runApp(const MyApp());
   }
 }
-/// 過期頁面 Widget (維持不變)
+
 class ExpiredAppPage extends StatelessWidget {
   const ExpiredAppPage({super.key});
   @override
@@ -40,6 +42,7 @@ class ExpiredAppPage extends StatelessWidget {
     );
   }
 }
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
   @override
@@ -50,20 +53,19 @@ class MyApp extends StatelessWidget {
           primarySwatch: Colors.blue,
           useMaterial3: true,
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue)),
-      home: const HomePage(), // 主頁入口不變
+      home: const HomePage(),
       debugShowCheckedModeBanner: false,
     );
   }
 }
-/// 建立一個模型類別來存放每個功能項目的資訊
+
 class FeatureItem {
   final String title;
   final IconData icon;
   final Widget page;
   const FeatureItem({required this.title, required this.icon, required this.page});
 }
-/// 所有功能頁面的列表
-/// 未來若要新增功能，只需要在此列表中增加一個 FeatureItem 即可
+
 final List<FeatureItem> features = [
   FeatureItem(title: '儲值(SIT)', icon: Icons.add_card, page: const TopUpPage()),
   FeatureItem(title: '反掃付款', icon: Icons.qr_code_scanner, page: const PaymentPage()),
@@ -72,51 +74,75 @@ final List<FeatureItem> features = [
   FeatureItem(title: '康是美跳轉', icon: Icons.open_in_new, page: const CosmedRedirectPage()),
   FeatureItem(title: '乘車碼扣款', icon: Icons.directions_bus, page: const RidePaymentPage()),
   FeatureItem(title: '儲值(UAT)', icon: Icons.add_moderator_outlined, page: const TopUpPageUat()),
-  // :闪闪发光: --- 修改點 --- :闪闪发光:
   FeatureItem(title: '韓國付款', icon: Icons.shield, page: const FiscPaymentPage()),
-  // :闪闪发光: 2. 在列表最後加入新功能
   FeatureItem(title: '美廉社3DS扣款', icon: Icons.local_grocery_store, page: const SimpleMartPaymentPage()),
-  // --- :礼花: 新增點 (2/2): 在列表最後加入「愛金卡褔利社」的新功能 ---
   FeatureItem(title: '愛金卡褔利社九九號店3DS扣款', icon: Icons.storefront, page: const IcashWelfarePaymentPage()),
+  FeatureItem(title: '博客來網路書店3DS扣款', icon: Icons.menu_book, page: const BooksPaymentPage()),
 ];
-/// 新的 HomePage Widget，使用網格佈局
+
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
+
+  // 🌟 2. 輔助函式：將 DateTime 轉為易讀格式 (YYYY-MM-DD HH:MM)
+  String _formatDate(DateTime date) {
+    return "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')} "
+        "${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}";
+  }
+
   @override
   Widget build(BuildContext context) {
+    // 🌟 3. 智慧判斷邏輯
+    // 如果 buildDateEnv 是空的 (代表沒下特殊指令)，就抓現在時間 (DateTime.now)
+    // 如果 buildDateEnv 有值，就用那個固定的包版日期
+    String displayDate;
+    if (buildDateEnv.isNotEmpty) {
+      displayDate = "版本: $buildDateEnv";
+    } else {
+      displayDate = "預覽: ${_formatDate(DateTime.now())} (App開啟時間)";
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('icash Pay Demo Home'),
         backgroundColor: Theme.of(context).colorScheme.primaryContainer,
       ),
-      body: GridView.builder(
-        // 使用 GridView.builder 建立網格
-        padding: const EdgeInsets.all(16.0),
-        // 設定網格的 Delegate，每行顯示 3 個項目
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 3, // 每行顯示的數量
-          crossAxisSpacing: 16.0, // 水平間距
-          mainAxisSpacing: 16.0, // 垂直間距
-          childAspectRatio: 0.9, // 調整項目的寬高比，讓文字有足夠空間
-        ),
-        itemCount: features.length, // 網格項目的總數
-        itemBuilder: (context, index) {
-          final feature = features[index];
-          return _buildFeatureCard(context, feature);
-        },
+      body: Column(
+        children: [
+          Expanded(
+            child: GridView.builder(
+              padding: const EdgeInsets.all(16.0),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                crossAxisSpacing: 16.0,
+                mainAxisSpacing: 16.0,
+                childAspectRatio: 0.9,
+              ),
+              itemCount: features.length,
+              itemBuilder: (context, index) {
+                final feature = features[index];
+                return _buildFeatureCard(context, feature);
+              },
+            ),
+          ),
+          // 🌟 4. 顯示日期
+          Padding(
+            padding: const EdgeInsets.only(bottom: 16.0, top: 8.0),
+            child: Text(
+              displayDate,
+              style: const TextStyle(color: Colors.grey, fontSize: 13.0),
+            ),
+          ),
+        ],
       ),
     );
   }
-  /// 建立單一網格項目的方法
+
   Widget _buildFeatureCard(BuildContext context, FeatureItem feature) {
     return Card(
       elevation: 2.0,
-      clipBehavior: Clip.antiAlias, // 讓 InkWell 的波紋效果被限制在 Card 的圓角內
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
-        // 使用 InkWell 包裹以提供點擊效果
         onTap: () {
-          // 點擊後，使用 Navigator.push 跳轉到對應的頁面
-          // 這會自動在目標頁面的 AppBar 上加上返回按鈕
           Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => feature.page),

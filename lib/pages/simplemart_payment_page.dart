@@ -8,7 +8,7 @@ class SimpleMartPaymentPage extends StatefulWidget {
 }
 class _SimpleMartPaymentPageState extends State<SimpleMartPaymentPage> {
   // 根據 simplemart.js 的範例，設定預設金額
-  final _totalAmountController = TextEditingController(text: '150100');
+  final _totalAmountController = TextEditingController(text: '300');
   final _barCodeController = TextEditingController();
   String _result = '執行結果將顯示於此';
   bool _isLoading = false;

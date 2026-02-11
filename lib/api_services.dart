@@ -719,3 +719,77 @@ kMo1zc154vPzFar+TiglwXaJwJ/rGOR1WcpS3Xf2+gi8WwGgq8XZww==
     }
   }
 }
+
+// --- :books: 全新加入：處理「博客來」相關的服務 ---
+class BooksApiService {
+  // --- 常數 (建議依據博客來實際提供的金鑰進行修改，此處暫用與範例相同的結構) ---
+  static const String _aesKey = "TYxdM1K7E3dXtiLvoA8x7umQvEpK0TRm";
+  static const String _aesIV = "fi5FFFHNbtl52Tj4";
+  static const String _encKeyId = "285460";
+  static const String _platformId = "10510711";
+  static const String _merchantId = "10510711";
+  static const String _privateKey = '''
+-----BEGIN PRIVATE KEY-----
+MIIEogIBAAKCAQEArpvKBY7vlt4fcDG6pViNK9OqDZbi+1Vgn4RbXSqmlwdVDGnx1r99p4B64ga/bVAU/Q4vb5hXEmeCalczZl8K9BAcJJ0b8lKLst8OKSuRsCw6QGJIpDZJ5yI5vb0wwo2Cu24bKivrQ4vJwp9+zsrOMHkLv25/zfpGOcKN9x4nTSm673/ZPD9JqJD4bzv4djRBiUORD2RSbe8uYzrRuxOPN5RINah6/TV5cO4tjVM8syehXNd4Zv8C3lqjnrRaChcDwbiJOSLpG89ybNyynjMqOwSBhTO1goEFZxeqInREfBsscBvbLuSJsOd75XxUBzlg8bCucVGX8B4grA1pzKHhIwIDAQABAoIBAAwiwdDPFXHr8E1w92MEm5M/O+OD6DTFw1hy75KzIy7+EHgzaN6fIpGgyWmqRGXJmhvYf42HDg42aYcQln73/h/mer5EuSuHdzQwcqCD6bVP7aCJ9DiNmWdaJp88ZgYvpbV3OqYctVZVgeloAn1G9TvDPgDJIlLjoTvkfM9/JgYj0dMOanfS9t1jYORwz5R5CjLUdhauAPTpw5Piuvu7Fpz4G95PwGw/tH+wlQLEbLwYHwLqRM2hQJa8tSTYdrkEq2svOmT+VY2eZXpy57BSdZFDMgJyVkiX3uv98tl1zSuGmOZc4KoaQAz6Uk5XqeQhPFwOxDwAufrVhz+GKyT0YxECgYEA6fEiSG6VuZOfRqHP9t08k9HXKUHxmwvdH679qHFf/b2SuCvklzz/H0Jfix6EarBSQGOLXpUgOQ0+mVl9KRrdd75mWCh7ghREiPwMjF15c0NiOhmYApmnpxWYNvv5KNmt2mbBtmhsJJ8ClE7eIL66RMEt924Q9bDZMOqhJ1QSS3kCgYEAvxJ46BJRHk8n24OzmzzfsuT3V2I1pS2mWMxGqrHzu0mhv1YqP5W3Z/xAeXEk1l2bmOSLAbcAqnTr8Br5R+TckHYMlMFBekDQtZMv6Ox4agreSZN9+7HuW+jNBHc04FKwg5viGD5MNiDhESP3t4m9aR0OwPkxzCRusKNGdFCvDnsCgYA1nLA5nzYq2DzZJ/4L2fmm+qDvcJBY8ugS+bxh3NGdydMU5+I0EqN423If5Ld957iBzw5Cd7RxvqpI5Gw9fk2gwn6b13MuhUyLhA+wHz/U/W1GWVUvy1zTeqxudWJNTU19Tq04C0g1QEeMC2L2aB8x4H+TQ6MZWxT7E9ootCiZKQKBgD+VdRi9Z7MvYjMhi7ZgNo0AtvKkYve5zj6ElAuftl0f7qyOjvaj6um2vvnq1fhkJDBn9X43mQggapd3UndDSMbmEd+6xABb61hRR8M6VgPr4/cWFvmYR5rcSMVwqe7wdX8Gc+HfcVsd6+fZUUkJlDeTjOJYyuKFSTSM0RhJ9UdbAoGAagXhwXdtEpUKdI7Cit8TsXlklWpz2gHGnOPHV1XapUsa69aesuunIGiMWpLk6hUBQXOKNZ/DTjXrkRyLjZ6w0l9d6NKNNQhv3nfN4PN/9A/uPJnP5GUO+autVjcTSh1FdE7VrQhqmgUIvzql1VYgeoR3nRIhcOjbZfZsXn9Tl2A=
+-----END PRIVATE KEY-----
+''';
+
+  /// 執行博客來扣款請求
+  Future<String> performDeduction({required String totalAmount, required String barCode}) async {
+    final timeInfo = _CryptoUtils.getCurrentTime();
+    final data = {
+      "PlatformID": _platformId,
+      "MerchantID": _merchantId,
+      "MerchantTradeNo": timeInfo['tradeNo'],
+      "StoreID": "0",
+      "StoreName": "博客來網路書店3DS", // 變更為博客來名稱
+      "MerchantTradeDate": timeInfo['tradeDate'],
+      "TotalAmount": totalAmount,
+      "ItemAmt": totalAmount,
+      "UtilityAmt": "0",
+      "CommAmt": "0",
+      "ItemNonRedeemAmt": "0",
+      "UtilityNonRedeemAmt": "0",
+      "CommNonRedeemAmt": "0",
+      "NonPointAmt": "0",
+      "Item": [
+        {"ItemNo": "001", "ItemName": "測試書籍1", "Quantity": "1"},
+        {"ItemNo": "002", "ItemName": "測試書籍2", "Quantity": "1"},
+      ],
+      "BarCode": barCode,
+    };
+
+    final jsonDataString = json.encode(data);
+    final encdata = _CryptoUtils.encryptAES_CBC_256(jsonDataString, _aesKey, _aesIV);
+    final signature = _CryptoUtils.signData(encdata, _privateKey);
+
+    try {
+      final response = await http.post(
+        Uri.parse('https://icp-payment-stage.icashpay.com.tw/api/V2/Payment/Pos/DeductICPOF'),
+        headers: {
+          'X-iCP-EncKeyID': _encKeyId,
+          'X-iCP-Signature': signature,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: {'EncData': encdata},
+      );
+
+      if (response.statusCode == 200) {
+        final responseBody = json.decode(response.body);
+        if (responseBody.containsKey('EncData') && responseBody['EncData'] != null) {
+          final decryptedData = _CryptoUtils.decryptAES_CBC_256(responseBody['EncData'], _aesKey, _aesIV);
+          const jsonEncoder = JsonEncoder.withIndent('  ');
+          final prettyPrintedJson = jsonEncoder.convert(json.decode(decryptedData));
+
+          return "原始回應：\n${response.body}\n\n請求成功！\n解密後的回應：\n$prettyPrintedJson";
+        } else {
+          return "請求成功，但回應不含加密資料：\n${response.body}";
+        }
+      } else {
+        throw Exception("請求失敗：\n狀態碼: ${response.statusCode}\n回應: ${response.body}");
+      }
+    } catch (e) {
+      throw Exception("請求時發生無法預期的錯誤: $e");
+    }
+  }
+}

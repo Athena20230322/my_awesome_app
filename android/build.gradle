@@ -1,3 +1,21 @@
+// --- 這是你需要修改或加入的區塊 ---
+buildscript {
+    // 1. 在這裡修改 Kotlin 版本
+    ext.kotlin_version = '2.1.0'
+    repositories {
+        google()
+        mavenCentral()
+    }
+
+    dependencies {
+        // 2. 在這裡修改 AGP 版本
+        classpath 'com.android.tools.build:gradle:8.6.0'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+// --- 區塊結束 ---
+
+// 以下是你剛剛貼上的程式碼，它們保持不變
 allprojects {
     repositories {
         google()
