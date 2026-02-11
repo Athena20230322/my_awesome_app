@@ -7,9 +7,13 @@ import 'pages/top_up_page_uat.dart';
 import 'pages/cosmed_redirect_page.dart';
 import 'pages/fisc_payment_page.dart';
 import 'pages/refund_page.dart';
+// :闪闪发光: 1. Import 我們的新頁面
+import 'pages/simplemart_payment_page.dart';
+// --- :礼花: 新增點 (1/2): Import 我們剛剛建立的「愛金卡褔利社」頁面 ---
+import 'pages/icash_welfare_payment_page.dart';
 void main() {
-  // 應用程式的有效期限設定
-  final expirationDate = DateTime.parse('2025-09-07');
+  // 應用程式的有效期限設定 (此部分邏輯維持不變)
+  final expirationDate = DateTime.parse('2025-12-07');
   final currentDate = DateTime.now();
   // 檢查是否過期
   if (currentDate.isAfter(expirationDate)) {
@@ -18,7 +22,7 @@ void main() {
     runApp(const MyApp());
   }
 }
-/// :闪闪发光: **這是您缺少實作的過期頁面 Widget**
+/// 過期頁面 Widget (維持不變)
 class ExpiredAppPage extends StatelessWidget {
   const ExpiredAppPage({super.key});
   @override
@@ -46,56 +50,96 @@ class MyApp extends StatelessWidget {
           primarySwatch: Colors.blue,
           useMaterial3: true,
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue)),
-      home: const HomePage(),
+      home: const HomePage(), // 主頁入口不變
       debugShowCheckedModeBanner: false,
     );
   }
 }
-class HomePage extends StatefulWidget {
-  const HomePage({super.key});
-  @override
-  State<HomePage> createState() => _HomePageState();
+/// 建立一個模型類別來存放每個功能項目的資訊
+class FeatureItem {
+  final String title;
+  final IconData icon;
+  final Widget page;
+  const FeatureItem({required this.title, required this.icon, required this.page});
 }
-class _HomePageState extends State<HomePage> {
-  int _selectedIndex = 0;
-  // 頁面選項列表
-  static const List<Widget> _widgetOptions = <Widget>[
-    TopUpPage(),
-    PaymentPage(),
-    RefundPage(), // 反掃退款頁面
-    CosmedPaymentPage(),
-    CosmedRedirectPage(),
-    RidePaymentPage(),
-    TopUpPageUat(),
-    FiscPaymentPage(),
-  ];
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-  }
+/// 所有功能頁面的列表
+/// 未來若要新增功能，只需要在此列表中增加一個 FeatureItem 即可
+final List<FeatureItem> features = [
+  FeatureItem(title: '儲值(SIT)', icon: Icons.add_card, page: const TopUpPage()),
+  FeatureItem(title: '反掃付款', icon: Icons.qr_code_scanner, page: const PaymentPage()),
+  FeatureItem(title: '反掃退款', icon: Icons.undo, page: const RefundPage()),
+  FeatureItem(title: '康是美扣款', icon: Icons.store, page: const CosmedPaymentPage()),
+  FeatureItem(title: '康是美跳轉', icon: Icons.open_in_new, page: const CosmedRedirectPage()),
+  FeatureItem(title: '乘車碼扣款', icon: Icons.directions_bus, page: const RidePaymentPage()),
+  FeatureItem(title: '儲值(UAT)', icon: Icons.add_moderator_outlined, page: const TopUpPageUat()),
+  // :闪闪发光: --- 修改點 --- :闪闪发光:
+  FeatureItem(title: '韓國付款', icon: Icons.shield, page: const FiscPaymentPage()),
+  // :闪闪发光: 2. 在列表最後加入新功能
+  FeatureItem(title: '美廉社3DS扣款', icon: Icons.local_grocery_store, page: const SimpleMartPaymentPage()),
+  // --- :礼花: 新增點 (2/2): 在列表最後加入「愛金卡褔利社」的新功能 ---
+  FeatureItem(title: '愛金卡褔利社九九號店3DS扣款', icon: Icons.storefront, page: const IcashWelfarePaymentPage()),
+];
+/// 新的 HomePage Widget，使用網格佈局
+class HomePage extends StatelessWidget {
+  const HomePage({super.key});
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: _widgetOptions.elementAt(_selectedIndex),
+      appBar: AppBar(
+        title: const Text('icash Pay Demo Home'),
+        backgroundColor: Theme.of(context).colorScheme.primaryContainer,
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(icon: Icon(Icons.add_card), label: '儲值(SIT)'),
-          BottomNavigationBarItem(icon: Icon(Icons.qr_code_scanner), label: '反掃付款'),
-          BottomNavigationBarItem(icon: Icon(Icons.undo), label: '反掃退款'),
-          BottomNavigationBarItem(icon: Icon(Icons.store), label: '康是美扣款'),
-          BottomNavigationBarItem(icon: Icon(Icons.open_in_new), label: '康是美跳轉'),
-          BottomNavigationBarItem(icon: Icon(Icons.directions_bus), label: '乘車碼扣款'),
-          BottomNavigationBarItem(icon: Icon(Icons.add_moderator_outlined), label: '儲值(UAT)'),
-          BottomNavigationBarItem(icon: Icon(Icons.shield), label: 'FISC付款'),
-        ],
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
-        type: BottomNavigationBarType.shifting,
-        selectedItemColor: Theme.of(context).colorScheme.primary,
-        unselectedItemColor: Colors.grey,
+      body: GridView.builder(
+        // 使用 GridView.builder 建立網格
+        padding: const EdgeInsets.all(16.0),
+        // 設定網格的 Delegate，每行顯示 3 個項目
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 3, // 每行顯示的數量
+          crossAxisSpacing: 16.0, // 水平間距
+          mainAxisSpacing: 16.0, // 垂直間距
+          childAspectRatio: 0.9, // 調整項目的寬高比，讓文字有足夠空間
+        ),
+        itemCount: features.length, // 網格項目的總數
+        itemBuilder: (context, index) {
+          final feature = features[index];
+          return _buildFeatureCard(context, feature);
+        },
+      ),
+    );
+  }
+  /// 建立單一網格項目的方法
+  Widget _buildFeatureCard(BuildContext context, FeatureItem feature) {
+    return Card(
+      elevation: 2.0,
+      clipBehavior: Clip.antiAlias, // 讓 InkWell 的波紋效果被限制在 Card 的圓角內
+      child: InkWell(
+        // 使用 InkWell 包裹以提供點擊效果
+        onTap: () {
+          // 點擊後，使用 Navigator.push 跳轉到對應的頁面
+          // 這會自動在目標頁面的 AppBar 上加上返回按鈕
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => feature.page),
+          );
+        },
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Icon(feature.icon, size: 40.0, color: Theme.of(context).colorScheme.primary),
+            const SizedBox(height: 12.0),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4.0),
+              child: Text(
+                feature.title,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 14.0),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 2,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

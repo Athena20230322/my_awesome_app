@@ -75,7 +75,7 @@ class _FiscPaymentPageState extends State<FiscPaymentPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('FISC QR 掃碼付款')),
+      appBar: AppBar(title: const Text('韓國 QR 掃碼付款')),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -84,7 +84,7 @@ class _FiscPaymentPageState extends State<FiscPaymentPage> {
             children: <Widget>[
               // ✨ 1. 在這裡新增說明文字
               const Text(
-                '財經測試時間平日九點至下午五點',
+                '財金公司開放測試時間平日九點至下午五點及使用公司WiFi方可測試',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 14, color: Colors.grey),
               ),
